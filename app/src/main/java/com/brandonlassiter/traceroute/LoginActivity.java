@@ -82,37 +82,31 @@ public class LoginActivity extends Activity {
         // NOTE: for extended permissions, like "user_about_me", your app must be reviewed by the Facebook team
         // (https://developers.facebook.com/docs/facebook-login/permissions/)
 
-        if(ParseUser.getCurrentUser() == null) {
 
-            ParseFacebookUtils.logInWithReadPermissionsInBackground(this, permissions, new LogInCallback() {
-                @Override
-                public void done(ParseUser user, ParseException err) {
-                    progressDialog.dismiss();
+        ParseFacebookUtils.logInWithReadPermissionsInBackground(this, permissions, new LogInCallback() {
+            @Override
+            public void done(ParseUser user, ParseException err) {
+                progressDialog.dismiss();
 
-                    if (user == null) {
+                if (user == null) {
 
-                        Toast.makeText(LoginActivity.this, "Login Failed", Toast.LENGTH_LONG).show();
+                    Toast.makeText(LoginActivity.this, "Login Failed", Toast.LENGTH_LONG).show();
 
-                    } else if (user.isNew()) {
+                } else if (user.isNew()) {
 
-                        Intent openMainActivity = new Intent(LoginActivity.this, MainActivity.class);
-                        startActivity(openMainActivity);
+                    Intent openMainActivity = new Intent(LoginActivity.this, MainActivity.class);
+                    startActivity(openMainActivity);
 
-                    } else {
-                        Log.d("Login", "User logged in through Facebook!");
+                } else {
+                    Log.d("Login", "User logged in through Facebook!");
 
-                        Intent openMainActivity = new Intent(LoginActivity.this, MainActivity.class);
-                        startActivity(openMainActivity);
-                    }
+                    Intent openMainActivity = new Intent(LoginActivity.this, MainActivity.class);
+                    startActivity(openMainActivity);
                 }
-            });
+            }
+        });
 
-        } else {
 
-            Intent openMainActivity = new Intent(LoginActivity.this, MainActivity.class);
-            startActivity(openMainActivity);
-
-        }
     }
 
     @Override

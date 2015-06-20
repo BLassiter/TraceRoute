@@ -1,5 +1,24 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools" tools:context=".MainActivity">
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".MainActivity">
+
+    <item
+        android:id="@+id/action_red"
+        android:orderInCategory="100"
+        android:title="Filter->Red"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_green"
+        android:orderInCategory="100"
+        android:title="Filter->Green"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_blue"
+        android:orderInCategory="100"
+        android:title="Filter->Blue"
+        app:showAsAction="never" />
 
 </menu>

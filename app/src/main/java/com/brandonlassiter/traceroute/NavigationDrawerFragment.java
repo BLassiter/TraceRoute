@@ -1,5 +1,7 @@
 package com.brandonlassiter.traceroute;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.support.v7.app.ActionBarActivity;
 import android.app.Activity;
 import android.support.v7.app.ActionBar;
@@ -11,6 +13,7 @@ import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.text.InputType;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -19,8 +22,20 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
+
+import com.parse.FindCallback;
+import com.parse.ParseException;
+import com.parse.ParseObject;
+import com.parse.ParseQuery;
+import com.parse.ParseUser;
+import com.parse.SaveCallback;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Fragment used for managing interactions for and presentation of a navigation drawer.
@@ -102,9 +117,8 @@ public class NavigationDrawerFragment extends Fragment {
                 android.R.layout.simple_list_item_activated_1,
                 android.R.id.text1,
                 new String[]{
-                        getString(R.string.title_section1),
-                        getString(R.string.title_section2),
-                        getString(R.string.title_section3),
+                        "Join Room",
+                        "Create Room",
                 }));
         mDrawerListView.setItemChecked(mCurrentSelectedPosition, true);
         return mDrawerListView;
@@ -190,15 +204,30 @@ public class NavigationDrawerFragment extends Fragment {
 
     private void selectItem(int position) {
         mCurrentSelectedPosition = position;
-        if (mDrawerListView != null) {
-            mDrawerListView.setItemChecked(position, true);
-        }
+
         if (mDrawerLayout != null) {
+
+            switch(position) {
+                case 0: {
+
+                    listRooms();
+                    break;
+
+                }
+
+                case 1: {
+
+                    createRoom();
+
+                    break;
+                }
+            }
+
             mDrawerLayout.closeDrawer(mFragmentContainerView);
+
+
         }
-        if (mCallbacks != null) {
-            mCallbacks.onNavigationDrawerItemSelected(position);
-        }
+
     }
 
     @Override
@@ -274,5 +303,143 @@ public class NavigationDrawerFragment extends Fragment {
          * Called when an item in the navigation drawer is selected.
          */
         void onNavigationDrawerItemSelected(int position);
+    }
+
+    public void createRoom() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setTitle("Create Room");
+        builder.setMessage("What would you like to call your room?");
+
+        final EditText input = new EditText(getActivity());
+
+        input.setInputType(InputType.TYPE_CLASS_TEXT);
+        builder.setView(input);
+
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                String text = input.getText().toString();
+                MainFragment frag = (MainFragment)getActivity().getSupportFragmentManager().findFragmentById(R.id.container);
+                if(frag != null) {
+                    frag.createRoom(text);
+                }
+            }
+        });
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+
+        builder.show();
+    }
+
+    public void listRooms() {
+
+        ParseQuery<ParseObject> query = ParseQuery.getQuery("GameRoom");
+        query.findInBackground(new FindCallback<ParseObject>() {
+            @Override
+            public void done(final List<ParseObject> parseObjects, ParseException e) {
+                RoomManager.getInstance().setRooms((ArrayList)parseObjects);
+
+                AlertDialog.Builder b = new AlertDialog.Builder(getActivity());
+                b.setTitle("Choose Room");
+                String[] rooms = new String[parseObjects.size()];
+
+                for(int i = 0; i < parseObjects.size(); i++) {
+
+                    ParseObject room = parseObjects.get(i);
+
+                    rooms[i] = room.getString("name");
+
+                }
+
+                b.setItems(rooms, new DialogInterface.OnClickListener() {
+
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+
+                        dialog.dismiss();
+
+                        RoomManager.getInstance().setCurrentRoom(parseObjects.get(which));
+
+                        showColorPicker();
+
+                    }
+
+                });
+
+                b.show();
+
+            }
+        });
+
+    }
+
+    public void showColorPicker() {
+        AlertDialog.Builder b = new AlertDialog.Builder(getActivity());
+        b.setTitle("Example");
+        final String[] rooms = new String[3];
+
+        rooms[0] = "Red";
+        rooms[1] = "Green";
+        rooms[2] = "Blue";
+
+        b.setItems(rooms, new DialogInterface.OnClickListener() {
+
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+
+                final ParseObject room = RoomManager.getInstance().getCurrentRoom();
+
+                final ArrayList<ParseObject> users = (ArrayList)((ArrayList)room.getList("users")).get(0);
+
+                boolean isInRoom = false;
+
+                for(ParseObject user : users) {
+
+                    if(user.getObjectId().equals(ParseUser.getCurrentUser().getObjectId())) {
+                        isInRoom = true;
+                    }
+
+                }
+
+                if(!isInRoom) {
+                    final ParseObject participant = new ParseObject("Participant");
+                    participant.put("user", ParseUser.getCurrentUser());
+                    participant.put("color", rooms[which].toLowerCase());
+                    participant.saveInBackground(new SaveCallback() {
+                        @Override
+                        public void done(ParseException e) {
+                            users.add(participant);
+
+                            room.put("users", Arrays.asList(users));
+
+                            room.saveInBackground(new SaveCallback() {
+                                @Override
+                                public void done(ParseException e) {
+
+                                    if (e == null) {
+
+                                        Toast.makeText(getActivity(), "Joined " + room.getString("name"), Toast.LENGTH_LONG).show();
+
+                                        MainFragment frag = (MainFragment)getActivity().getSupportFragmentManager().findFragmentById(R.id.container);
+                                        frag.h.post(frag.r2);
+                                    }
+
+                                }
+                            });
+
+                        }
+                    });
+
+                }
+
+            }
+
+        });
+
+        b.show();
     }
 }
