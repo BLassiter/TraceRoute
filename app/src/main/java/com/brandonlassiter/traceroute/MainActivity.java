@@ -1,5 +1,11 @@
 package com.brandonlassiter.traceroute;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBar;
@@ -9,6 +15,9 @@ import android.view.MenuItem;
 import android.support.v4.widget.DrawerLayout;
 import com.facebook.appevents.AppEventsLogger;
 import com.parse.ParseObject;
+
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 
 
 public class MainActivity extends ActionBarActivity
@@ -109,6 +118,32 @@ public class MainActivity extends ActionBarActivity
             frag.mColorSelected = "green";
         } else if(id == R.id.action_blue) {
             frag.mColorSelected = "blue";
+        } else if(id == R.id.action_location) {
+            frag.toggleLocation();
+        } else if(id == R.id.action_overlay) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("Overlay Image?");
+            builder.setMessage("Would you like to select an image to overlay on top of the map?");
+
+            builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    Intent intent = new Intent();
+                    intent.setType("image/*");
+                    intent.setAction(Intent.ACTION_GET_CONTENT);
+                    startActivityForResult(Intent.createChooser(intent,
+                            "Select Picture"), 0x001);
+
+                }
+            });
+            builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+
+                }
+            });
+
+            builder.show();
         }
         return super.onOptionsItemSelected(item);
     }
@@ -117,4 +152,26 @@ public class MainActivity extends ActionBarActivity
      * A placeholder fragment containing a simple view.
      */
 
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        Uri selectedImageUri = data.getData();
+
+        try {
+            InputStream is = getContentResolver().openInputStream(selectedImageUri);
+
+            BitmapFactory.Options opts = new BitmapFactory.Options();
+            opts.inSampleSize = 0;
+
+            Bitmap original = BitmapFactory.decodeStream(is, null, opts);
+
+            RoomManager.getInstance().setOverlay(original);
+
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
 }

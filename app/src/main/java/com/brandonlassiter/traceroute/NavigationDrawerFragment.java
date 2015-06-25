@@ -1,7 +1,12 @@
 package com.brandonlassiter.traceroute;
 
 import android.app.AlertDialog;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.graphics.Bitmap;
 import android.support.v7.app.ActionBarActivity;
 import android.app.Activity;
 import android.support.v7.app.ActionBar;
@@ -305,6 +310,8 @@ public class NavigationDrawerFragment extends Fragment {
         void onNavigationDrawerItemSelected(int position);
     }
 
+    String roomName;
+
     public void createRoom() {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setTitle("Create Room");
@@ -318,11 +325,9 @@ public class NavigationDrawerFragment extends Fragment {
         builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                String text = input.getText().toString();
-                MainFragment frag = (MainFragment)getActivity().getSupportFragmentManager().findFragmentById(R.id.container);
-                if(frag != null) {
-                    frag.createRoom(text);
-                }
+                roomName = input.getText().toString();
+                finishRoomCreation();
+
             }
         });
         builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -333,6 +338,14 @@ public class NavigationDrawerFragment extends Fragment {
         });
 
         builder.show();
+    }
+
+
+    public  void finishRoomCreation() {
+        MainFragment frag = (MainFragment)getActivity().getSupportFragmentManager().findFragmentById(R.id.container);
+        if(frag != null) {
+            frag.createRoom(roomName);
+        }
     }
 
     public void listRooms() {
@@ -442,4 +455,5 @@ public class NavigationDrawerFragment extends Fragment {
 
         b.show();
     }
+
 }

@@ -27,8 +27,10 @@ import com.parse.LogInCallback;
 import com.parse.ParseException;
 import com.parse.ParseFacebookUtils;
 import com.parse.ParseGeoPoint;
+import com.parse.ParseInstallation;
 import com.parse.ParseObject;
 import com.parse.ParseUser;
+import com.parse.PushService;
 import com.parse.SaveCallback;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -70,6 +72,7 @@ public class LoginActivity extends Activity {
         ((Button) findViewById(R.id.authButton)).setText("Login with Facebook");
 
 
+        ParseInstallation.getCurrentInstallation().saveInBackground();
 
     }
 

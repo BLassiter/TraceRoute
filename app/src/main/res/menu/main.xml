@@ -3,6 +3,15 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context=".MainActivity">
 
+    <item android:id="@+id/action_overlay"
+        android:orderInCategory="99"
+        android:title="Add Map Overlay"
+        app:showAsAction="never"/>
+    <item android:id="@+id/action_location"
+        android:orderInCategory="99"
+        android:title="Enable/Disable Location"
+        app:showAsAction="never"/>
+
     <item
         android:id="@+id/action_red"
         android:orderInCategory="100"

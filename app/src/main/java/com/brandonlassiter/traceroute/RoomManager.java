@@ -1,5 +1,7 @@
 package com.brandonlassiter.traceroute;
 
+import android.graphics.Bitmap;
+
 import com.parse.ParseObject;
 
 import java.util.ArrayList;
@@ -12,6 +14,7 @@ public class RoomManager {
     private static RoomManager sharedInstance;
     private ArrayList<ParseObject> rooms;
     private ParseObject currentRoom;
+    private Bitmap overlay;
 
     public static RoomManager getInstance() {
 
@@ -37,5 +40,13 @@ public class RoomManager {
 
     public ArrayList<ParseObject> getRooms() {
         return rooms;
+    }
+
+    public void setOverlay(Bitmap overlay) {
+        this.overlay = overlay;
+    }
+
+    public Bitmap getOverlay() {
+        return overlay;
     }
 }

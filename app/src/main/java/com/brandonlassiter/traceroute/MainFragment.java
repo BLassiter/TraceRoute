@@ -3,6 +3,7 @@ package com.brandonlassiter.traceroute;
 
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.location.Criteria;
 import android.location.Location;
@@ -27,6 +28,7 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
+import com.google.android.gms.maps.model.GroundOverlayOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.parse.FindCallback;
@@ -51,8 +53,9 @@ public class MainFragment extends Fragment implements View.OnClickListener, OnMa
     String mColorSelected;
     ParseObject currentRoom;
     ProgressDialog dialog;
-
+    boolean isLocationEnabled;
     LatLng currentPosition;
+    LatLng overlayPosition;
 
     GoogleMap map;
     boolean updateDone = false;
@@ -143,7 +146,6 @@ public class MainFragment extends Fragment implements View.OnClickListener, OnMa
     @Override
     public void onMapReady(GoogleMap googleMap) {
         map = googleMap;
-        map.setMyLocationEnabled(true);
     }
 
     public void getPosition() {
@@ -162,16 +164,26 @@ public class MainFragment extends Fragment implements View.OnClickListener, OnMa
             @Override
             public void onLocationChanged(Location location) {
 
-                currentPosition = new LatLng(location.getLatitude(), location.getLongitude());
+                if(isLocationEnabled) {
 
-                ParseUser me = ParseUser.getCurrentUser();
+                    currentPosition = new LatLng(location.getLatitude(), location.getLongitude());
 
-                if(me != null) {
+                    ParseUser me = ParseUser.getCurrentUser();
 
-                    me.put("currentLocation", new ParseGeoPoint(currentPosition.latitude, currentPosition.longitude));
-                    me.saveInBackground();
+                    if (me != null) {
+
+                        me.put("currentLocation", new ParseGeoPoint(currentPosition.latitude, currentPosition.longitude));
+
+                        me.saveInBackground();
+
+                        if (overlayPosition == null) {
+                            overlayPosition = new LatLng(currentPosition.latitude, currentPosition.longitude);
+                        }
+
+                    }
 
                 }
+
                 h.post(r);
 
             }
@@ -198,12 +210,8 @@ public class MainFragment extends Fragment implements View.OnClickListener, OnMa
 
         if(position != null) {
 
-            if(currentRoom != null) {
-                map.setMyLocationEnabled(false);
-            }
-
             CameraPosition newCamPos = new CameraPosition(position,
-                    20.5f,
+                    18.5f,
                     map.getCameraPosition().tilt, //use old tilt
                     map.getCameraPosition().bearing); //use old bearing
             map.animateCamera(CameraUpdateFactory.newCameraPosition(newCamPos), 1000, null);
@@ -244,9 +252,7 @@ public class MainFragment extends Fragment implements View.OnClickListener, OnMa
                         dialog.hide();
 
                         RoomManager.getInstance().setCurrentRoom(room);
-                        h.post(r2);
-                        map.setMyLocationEnabled(false);
-
+                        h.postDelayed(r2, 5000);
 
                     }
 
@@ -261,6 +267,7 @@ public class MainFragment extends Fragment implements View.OnClickListener, OnMa
     public void addMarkers(final ArrayList<ParseObject> participants) {
 
         map.clear();
+
         final ArrayList<MarkerOptions> markers = new ArrayList<>();
 
         final int count = 0;
@@ -302,6 +309,20 @@ public class MainFragment extends Fragment implements View.OnClickListener, OnMa
                                         map.addMarker(marker);
                                     }
 
+                                    if(RoomManager.getInstance().getOverlay() != null && overlayPosition != null) {
+
+                                        Bitmap overlay = RoomManager.getInstance().getOverlay();
+
+                                        BitmapDescriptor bitDesc = BitmapDescriptorFactory.fromBitmap(overlay);
+
+                                        GroundOverlayOptions groundOverlay = new GroundOverlayOptions()
+                                                .image(bitDesc)
+                                                .position(overlayPosition, 500f)
+                                                .transparency(0.5f);
+                                        map.addGroundOverlay(groundOverlay);
+
+                                    }
+
                                 }
 
                             }
@@ -311,9 +332,17 @@ public class MainFragment extends Fragment implements View.OnClickListener, OnMa
                 }
             });
 
-
-
         }
 
+    }
+
+    public void toggleLocation() {
+        if(isLocationEnabled) {
+            isLocationEnabled = false;
+            Toast.makeText(getActivity(), "Location Disabled", Toast.LENGTH_LONG).show();
+        } else {
+            isLocationEnabled = true;
+            Toast.makeText(getActivity(), "Location Enabled", Toast.LENGTH_LONG).show();
+        }
     }
 }
